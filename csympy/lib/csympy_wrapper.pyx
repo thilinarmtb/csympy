@@ -1,6 +1,7 @@
 from cython.operator cimport dereference as deref
 cimport csympy
 from csympy cimport rcp, RCP
+from libcpp cimport bool
 from libcpp.string cimport string
 
 class SympifyError(Exception):
@@ -473,6 +474,57 @@ cdef class DenseMatrix(MatrixBase):
         import sympy
         return sympy.Matrix(s)
 
+cdef class Sieve:
+    cdef csympy.vector[unsigned] _primes
+    @staticmethod
+    def generate_primes(n):
+        cdef csympy.vector[unsigned] primes
+        csympy.sieve_generate_primes(primes, n)
+        s = []
+        for i in range(primes.size()):
+            s.append(primes[i])
+        return s
+     
+    @staticmethod
+    def set_sieve_size(n):
+        csympy.sieve_set_size(n)
+    
+    @staticmethod
+    def set_clear(n):
+        csympy.sieve_set_clear(n)
+    
+    @staticmethod
+    def clear():
+        csympy.sieve_clear()
+    
+cdef class Sieve_iterator:
+    cdef csympy.sieve_iterator *thisptr
+    cdef unsigned limit
+    def __cinit__(self):
+        self.thisptr = new csympy.sieve_iterator()
+        self.limit = 0
+    
+    def __cinit__(self, n):
+        self.thisptr = new csympy.sieve_iterator(n)
+        self.limit = n
+    
+    def __iter__(self):
+        return self
+
+    def next(self):
+        n = deref(self.thisptr).next_prime()
+        if self.limit > 0 and n > self.limit:
+            raise StopIteration
+        else:
+            return n
+    
+    def __next__(self):
+        n = deref(self.thisptr).next_prime()
+        if self.limit > 0 and n > self.limit:
+            raise StopIteration
+        else:
+            return n
+
 def sin(x):
     cdef Basic X = sympify(x)
     return c2py(csympy.sin(X.thisptr))
@@ -491,6 +543,41 @@ def sqrt(x):
 
 def densematrix(row, col, l):
     return DenseMatrix(row, col, l)
+    
+def nextprime(n):
+    cdef Integer N = sympify(n)
+    return c2py(<RCP[const csympy.Basic]>(csympy.nextprime(deref(csympy.rcp_static_cast_Integer(N.thisptr)))))
+
+def gcd_ext(a, b):
+    cdef RCP[const csympy.Integer] g, s, t
+    cdef Integer A = sympify(a), B = sympify(b)
+    csympy.gcd_ext(csympy.outArg_Integer(g), csympy.outArg_Integer(s), csympy.outArg_Integer(t), deref(csympy.rcp_static_cast_Integer(A.thisptr)), deref(csympy.rcp_static_cast_Integer(B.thisptr)))
+    return [c2py(<RCP[const csympy.Basic]>g), c2py(<RCP[const csympy.Basic]>s), c2py(<RCP[const csympy.Basic]>t)]
+    
+def prime_factors(n):
+    cdef csympy.vec_integer factors
+    cdef Integer A = sympify(n)
+    cdef RCP[const csympy.Integer] N = csympy.rcp_static_cast_Integer(A.thisptr)
+    csympy.prime_factors(N, factors)
+    s = []
+    for i in range(factors.size()):
+        s.append(c2py(<RCP[const csympy.Basic]>(factors[i])))
+    return s
+
+def prime_factor_multiplicities(n):
+    cdef csympy.vec_integer factors
+    cdef Integer A = sympify(n)
+    cdef RCP[const csympy.Integer] N = csympy.rcp_static_cast_Integer(A.thisptr)
+    csympy.prime_factors(N, factors)
+    cdef Basic r
+    dict = {}
+    for i in range(factors.size()):
+        r = c2py(<RCP[const csympy.Basic]>(factors[i]))
+        if (r not in dict):
+            dict[r] = 1
+        else:
+            dict[r] += 1
+    return dict
 
 I = c2py(csympy.I)
 

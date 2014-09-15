@@ -493,8 +493,17 @@ void prime_factor_multiplicities(const RCP<const Integer> &n,
 }
 
 std::vector<unsigned> Sieve::_primes = {2,3,5,7,11,13,17,19,23,29};
-bool Sieve::set_clear = true;
+bool Sieve::_set_clear = true;
 unsigned Sieve::_sieve_size = 32 * 1024 * 8; //32K in bits
+
+void Sieve::set_clear(bool clear) {
+    _set_clear = clear;
+}
+
+void Sieve::clear()
+{
+    _primes.erase(_primes.begin()+10, _primes.end());
+}
 
 void Sieve::set_sieve_size(unsigned size) {
 #ifdef HAVE_CSYMPY_PRIMESIEVE
@@ -545,13 +554,15 @@ void Sieve::_extend(unsigned limit)
 #endif
 }
 
-void Sieve::generate_primes(unsigned limit, std::vector<unsigned> &primes)
+void Sieve::generate_primes(std::vector<unsigned> &primes, unsigned limit)
 {
     _extend(limit);
     std::vector<unsigned>::iterator it = std::upper_bound (_primes.begin(), _primes.end(), limit);
     //find the first position greater than limit and reserve space for the primes
     primes.reserve(it - _primes.begin());
     std::copy(_primes.begin(), it,  std::back_inserter( primes ));
+    if(_set_clear)
+        clear();
 }
 
 Sieve::iterator::iterator(unsigned max)
@@ -566,15 +577,16 @@ Sieve::iterator::iterator()
     _index = 0;
 }
 
-Sieve::iterator::~iterator(){
-    Sieve::clear();
+Sieve::iterator::~iterator()
+{
+    if (_set_clear) {
+        clear();
+    }
 }
 
-void Sieve::clear()
+unsigned Sieve::iterator::get_limit()
 {
-    if (set_clear) {
-        _primes = {2,3,5,7,11,13,17,19,23,29};
-    }
+    return _limit;
 }
 
 unsigned Sieve::iterator::next_prime()

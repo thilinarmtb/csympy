@@ -95,19 +95,20 @@ private:
     static std::vector<unsigned> _primes;
     static void _extend(unsigned limit);
     static unsigned _sieve_size;
+    static bool _set_clear;
 
 public:
     // Returns all primes up to the `limit` (including). The vector `primes` should
     // be empty on input and it will be filled with the primes.
     //! \param primes: holds all primes up to the `limit` (including).
-    static void generate_primes(unsigned limit, std::vector<unsigned> &primes);
-    //Clear the array of primes stored if the variable set_clear is set to true
+    static void generate_primes(std::vector<unsigned> &primes, unsigned limit);
+    //Clear the array of primes stored
     static void clear();
     //Set the sieve size in kilobytes. Set it to L1d cache size for best performance.
     //Default value is 32.
     static void set_sieve_size(unsigned size);
-    //Variable to set whether the sieve is cleared when clear() is called
-    static bool set_clear;
+    //Variable to set whether the sieve is cleared when sieve is used internally
+    static void set_clear(bool clear);
 
     class iterator {
 
@@ -122,6 +123,7 @@ public:
         iterator();
         //Destructor
         ~iterator();
+        unsigned get_limit();
         //Next prime
         unsigned next_prime();
     };

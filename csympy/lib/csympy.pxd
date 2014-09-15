@@ -26,6 +26,7 @@ cdef extern from "csympy_rcp.h" namespace "CSymPy":
         T& operator*() nogil except +
 
     RCP[const Symbol] rcp_static_cast_Symbol "CSymPy::rcp_static_cast<const CSymPy::Symbol>"(RCP[const Basic] &b) nogil
+    RCP[const Integer] rcp_static_cast_Integer "CSymPy::rcp_static_cast<const CSymPy::Integer>"(RCP[const Basic] &b) nogil
     RCP[const Add] rcp_static_cast_Add "CSymPy::rcp_static_cast<const CSymPy::Add>"(RCP[const Basic] &b) nogil
     RCP[const Mul] rcp_static_cast_Mul "CSymPy::rcp_static_cast<const CSymPy::Mul>"(RCP[const Basic] &b) nogil
     RCP[const Pow] rcp_static_cast_Pow "CSymPy::rcp_static_cast<const CSymPy::Pow>"(RCP[const Basic] &b) nogil
@@ -34,6 +35,7 @@ cdef extern from "csympy_rcp.h" namespace "CSymPy":
     RCP[const FunctionSymbol] rcp_static_cast_FunctionSymbol "CSymPy::rcp_static_cast<const CSymPy::FunctionSymbol>"(RCP[const Basic] &b) nogil
     RCP[const Derivative] rcp_static_cast_Derivative "CSymPy::rcp_static_cast<const CSymPy::Derivative>"(RCP[const Basic] &b) nogil
     Ptr[RCP[Basic]] outArg(RCP[const Basic] &arg) nogil
+    Ptr[RCP[Integer]] outArg_Integer "CSymPy::outArg<CSymPy::RCP<const CSymPy::Integer>>"(RCP[const Integer] &arg) nogil
 
     void print_stack_on_segfault() nogil
 
@@ -41,6 +43,9 @@ cdef extern from "csympy_rcp.h" namespace "CSymPy":
 cdef extern from "basic.h" namespace "CSymPy":
     ctypedef map[RCP[Basic], RCP[Basic]] map_basic_basic
     ctypedef vector[RCP[Basic]] vec_basic "CSymPy::vec_basic"
+    ctypedef vector[RCP[Integer]] vec_integer "CSymPy::vec_integer"
+    ctypedef map[RCP[Integer], unsigned] map_integer_uint "CSymPy::map_integer_uint"
+    cdef struct RCPIntegerKeyLess
     cdef cppclass Basic:
         string __str__() nogil except +
         unsigned int hash() nogil except +
@@ -172,3 +177,20 @@ cdef extern from "matrix.h" namespace "CSymPy":
 
     bool is_a_DenseMatrix "CSymPy::is_a<CSymPy::DenseMatrix>"(const MatrixBase &b) nogil
     DenseMatrix* static_cast_DenseMatrix "static_cast<CSymPy::DenseMatrix*>"(const MatrixBase *a)
+
+cdef extern from "ntheory.h" namespace "CSymPy":
+    RCP[const Integer] nextprime "CSymPy::nextprime"(const Integer &a) nogil
+    void gcd_ext "CSymPy::gcd_ext"(const Ptr[RCP[Integer]] &g, const Ptr[RCP[Integer]] &s, const Ptr[RCP[Integer]] &t, const Integer &a, const Integer &b) nogil
+    void sieve_generate_primes "CSymPy::Sieve::generate_primes"(vector[unsigned] &primes, unsigned limit) nogil
+    void sieve_clear "CSymPy::Sieve::clear"() nogil
+    void sieve_set_size "CSymPy::Sieve::set_sieve_size"(unsigned size) nogil
+    bool sieve_set_clear "CSymPy::Sieve::set_clear"(bool clear) nogil
+    void prime_factors(RCP[const Integer] &n, vec_integer &primes) nogil except +
+    void prime_factor_multiplicities(RCP[const Integer] &n, map_integer_uint &primes) nogil except +
+    
+    cdef cppclass sieve_iterator "CSymPy::Sieve::iterator":
+        sieve_iterator()
+        sieve_iterator(unsigned limit) nogil
+        unsigned next_prime() nogil
+        unsigned get_limit() nogil
+    
