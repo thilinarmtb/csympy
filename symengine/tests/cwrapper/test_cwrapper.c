@@ -175,6 +175,11 @@ void test_cwrapper()
     SYMENGINE_C_ASSERT(is_a_Integer(p));
     SYMENGINE_C_ASSERT(integer_get_si(p) == 444);
 
+    str = "floor(9/8)";
+    basic_parse(p, str);
+    SYMENGINE_C_ASSERT(is_a_Integer(p));
+    SYMENGINE_C_ASSERT(integer_get_si(p) == 1);
+
 #if SYMENGINE_INTEGER_CLASS != SYMENGINE_BOOSTMP
     mpq_clear(testr);
     mpz_clear(test);
